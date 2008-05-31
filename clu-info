@@ -22,6 +22,7 @@ echo
 uname -a
 echo
 free
+echo
 
 echo "Network:"
 ip -family inet address
@@ -31,11 +32,13 @@ echo
 brctl show
 echo
 
-echo "LVM:"
+echo "Disks:"
 vgs
 echo
 lvs
 echo 
+cat /proc/drbd
+echo
 
 echo "Xen:"
 xm uptime
