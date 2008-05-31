@@ -14,7 +14,7 @@
 
 set -e
 
-NODE1=localhost
+NODE1=$(hostname -f)
 NODE2=dolphin1.client.zytolabor.ch
 
 # Commandline Parsing
@@ -26,13 +26,44 @@ LVM_VG=${LVM_VG:-orca}
 LVM_FS=${LVM_FS:-ext3}
 LVM_SIZE=${LVM_SIZE:-4G}
 
+function get_ip() {
+local name=$1
+
+	host $name | cut -d ' ' -f 4
+}
+
 # Create disk
 function create() {
+	# Create logical volume
 	lvcreate --size $LVM_SIZE --name $LVM_LV $LVM_VG
-	mkfs.$LVM_FS /dev/$LVM_VG/$LVM_LV
+
+	# Add DRBD ressource config snipplet
+	cat <<EOF
+resource "$LVM_LV" {
+	protocol C;
+	on $NODE1 {
+		address $(get_ip $NODE1):7790;
+		disk /dev/$LVM_VG/$LVM_LV;
+		device /dev/drbd2;
+		meta-disk "internal";
+	}
+	on $NODE2 {
+		address $(get_ip $NODE2):7790;
+		disk /dev/$LVM_VG/$LVM_LV;
+		device /dev/drbd2;
+		meta-disk "internal";
+	}
+}
+EOF
+>>/etc/drbd.conf
+
+	# 
+	sudo drbdadm create-md $LVM_LV
+	sudo drbdadm up $LVM_LV
 }
 
 function destroy() {
+	sudo drbdadm down $LVM_LV || echo "[WARN] Couldn't stop DRBD device"
 	lvremove /dev/$LVM_VG/$LVM_LV
 }
 
