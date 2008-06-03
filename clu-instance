@@ -1,0 +1,65 @@
+#!/bin/bash
+
+#  Copyright 2008 Simon Hürlimann <simon.huerlimann@cyt.ch>
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+
+set -e
+
+# Commandline Parsing
+# ===================
+NODE1=$(hostname -f)
+NODE2=$1
+
+function usage() {
+	echo "Usage: $(basename $0) create <SECONDARY> <INSTANCE> [<xen-create-image options>]"
+	echo "                      destroy <INSTANCE>"
+	exit 0
+}
+if [ $# -lt 2 ] ; then
+	usage
+fi
+
+
+ 
+ACTION=${1:list}
+
+function get_ip() {
+local name=$1
+
+	host $name | cut -d ' ' -f 4
+}
+
+# Create instance
+function create() {
+local primary=$(hostname --fqdn)
+local secondary=$2
+local instance=$3
+shift 3
+local xen_create_image_options="$@"
+
+        # Create disc
+        clu-disk create $secondary $instance-disk
+
+	# Create xen instance
+	xen-create-image --drbd $secondary --hostname $instance --dhcp --noswap --force
+}
+        
+function destroy() {
+local resource=$2
+
+	xen-destroy-image $instance
+	clu-disk destroy $instance-disk
+}
+
+# Main
+# ====
+$ACTION $@
