@@ -20,8 +20,14 @@ NODE1=$(hostname -f)
 NODE2=$1
 
 function usage() {
-	echo "Usage: $(basename $0) create <SECONDARY> <RESOURCE> [<DEVICE> <PORT> <SIZE> <LVM_VG>]"
+	echo "Usage: $(basename $0) create <SECONDARY> <RESOURCE> [<DEVICE=drbd0> <PORT=7788> <SIZE=1G> <LVM_VG=hostname>]"
 	echo "                      destroy <RESOURCE>"
+	echo "                      create_from_physical <PRIMARY> <SECONDARY> <RESOURCE> <DISK> [<DEVICE=drbd0> <PORT=7788>]"
+	echo
+	echo "Environment variables"
+	echo "	SKIP_RESIZE: if '1' don't resize LVM partition to make space for DRBD meta-data"
+	echo
+
 	exit 0
 }
 if [ $# -lt 2 ] ; then
