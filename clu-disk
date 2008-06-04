@@ -104,6 +104,7 @@ local port=${6:-7788}
 
 	# Activate drbd
 	drbdadm create-md $resource
+	drbdadm up $resource
 
 	# First time initialization
 	drbdadm -- --overwrite-data-of-peer primary $resource
