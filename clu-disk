@@ -97,7 +97,7 @@ local device=${5:-drbd0}
 local port=${6:-7788}
 
 	# Make space for internal DRBD meta-data
-	lvextend --size +$(calculate_meta $disk) $disk
+	[ "$SKIP_RESIZE" == "1" ] || lvextend --size +$(calculate_meta $disk) $disk
 	
         # Add DRBD ressource config snipple
 	drbd_resource_config $primary $secondary $resource $disk $device $port >>/etc/drbd.conf
