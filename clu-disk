@@ -26,6 +26,7 @@ function usage() {
 	echo
 	echo "Environment variables"
 	echo "	SKIP_RESIZE: if '1' don't resize LVM partition to make space for DRBD meta-data"
+	echo "	SKIP_CONF: if '1' don't update DRBD config-file"
 	echo
 
 	exit 0
@@ -100,7 +101,7 @@ local port=${6:-7788}
 	[ "$SKIP_RESIZE" == "1" ] || lvextend --size +$(calculate_meta $disk)M $disk
 	
         # Add DRBD ressource config snipple
-	drbd_resource_config $primary $secondary $resource $disk $device $port >>/etc/drbd.conf
+	[ "$SKIP_CONF" == "1" ] || drbd_resource_config $primary $secondary $resource $disk $device $port >>/etc/drbd.conf
 
 	# Activate drbd
 	drbdadm create-md $resource
@@ -125,7 +126,7 @@ local lvm_vg=${7:-$(hostname --short)}
         lvcreate --size $size --name $resource $lvm_vg
 
         # Add DRBD ressource config snipple
-	drbd_resource_config $primary $secondary $resource /dev/$lvm_vg/$resource $device $port >>/etc/drbd.conf
+	[ "$SKIP_CONF" == "1" ] || drbd_resource_config $primary $secondary $resource /dev/$lvm_vg/$resource $device $port >>/etc/drbd.conf
 
 	# Activate drbd
 	drbdadm create-md $resource
@@ -162,7 +163,7 @@ local resource=$2
 
 	lvremove $(extract_disk $resource)
 
-	cut_section $resource
+	[ "$SKIP_CONF" == "1" ] || cut_section $resource
 }
 
 # Main
