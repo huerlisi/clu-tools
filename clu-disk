@@ -37,8 +37,8 @@ fi
 
 
  
-ACTION=${1:list}
-
+# Helper functions
+# ================
 function get_ip() {
 local name=$1
 
@@ -85,57 +85,6 @@ local disk=$1
 	echo $(( $(blockdev --getsize64 $disk) / 512 * 8 / 2 ** 18 + 72))
 }
 
-
-# Create drbd disk from physical disk
-function create_from_physical() {
-shift
-
-local primary=$1
-local secondary=$2
-local resource=$3
-local disk=$4
-local device=${5:-drbd0}
-local port=${6:-7788}
-
-	# Make space for internal DRBD meta-data
-	[ "$SKIP_RESIZE" == "1" ] || lvextend --size +$(calculate_meta $disk)M $disk
-	
-        # Add DRBD ressource config snipple
-	[ "$SKIP_CONF" == "1" ] || drbd_resource_config $primary $secondary $resource $disk $device $port >>/etc/drbd.conf
-
-	# Activate drbd
-	drbdadm create-md $resource
-	drbdadm up $resource
-
-	# First time initialization
-	drbdadm -- --overwrite-data-of-peer primary $resource
-}
-
-# Create disk
-function create() {
-local primary=$(hostname --fqdn)
-local secondary=$2
-local resource=$3
-local device=${4:-drbd0}
-local port=${5:-7788}
-local size=${6:-1G}
-# This is an ubuntu default when using the partitioner recipe
-local lvm_vg=${7:-$(hostname --short)}
-
-        # Create logical volume
-        lvcreate --size $size --name $resource $lvm_vg
-
-        # Add DRBD ressource config snipple
-	[ "$SKIP_CONF" == "1" ] || drbd_resource_config $primary $secondary $resource /dev/$lvm_vg/$resource $device $port >>/etc/drbd.conf
-
-	# Activate drbd
-	drbdadm create-md $resource
-        drbdadm up $resource
-
-	# Check if there's a primary already
-	(drbdadm state $resource 2>/dev/null | grep Primary >/dev/null) || drbdadm -- --overwrite-data-of-peer primary $resource
-}
-
 function cut_section() {
 local resource=$1
 
@@ -155,6 +104,103 @@ local resource=$1
         extract_section $resource | sed -n 's#[^#]*[[:space:]]disk[[:space:]]*\(/dev/[^;]*\);.*#\1#p'
 }
         
+
+# Commands
+# ========
+
+# Create drbd disk from physical disk
+function create_primary_from_physical() {
+local primary=$1
+local secondary=$2
+local resource=$3
+local disk=$4
+local device=${5:-drbd0}
+local port=${6:-7788}
+
+	# Make space for internal DRBD meta-data
+	[ "$SKIP_RESIZE" == "1" ] || lvextend --size +$(calculate_meta $disk)M $disk
+	
+	# Create and initialize DRBD resource
+	create_primary $@
+}
+
+# Create DRBD disk
+function create_node() {
+local primary=$1
+local secondary=$2
+local resource=$3
+local disk=$4
+local device=${5:-drbd0}
+local port=${6:-7788}
+
+        # Add DRBD ressource config snipplet
+	[ "$SKIP_CONF" == "1" ] || drbd_resource_config $primary $secondary $resource $disk $device $port >>/etc/drbd.conf
+
+	# Activate drbd
+	drbdadm create-md $resource
+	drbdadm up $resource
+}
+
+# Create primary DRBD disk
+function create_primary() {
+local primary=$1
+local secondary=$2
+local resource=$3
+local disk=$4
+local device=${5:-drbd0}
+local port=${6:-7788}
+
+	# Create DRBD disk
+	create_node $@
+
+	# First time initialization
+	drbdadm -- --overwrite-data-of-peer primary $resource
+}
+
+# Create secondary DRBD disk
+function create_secondary() {
+local primary=$1
+local secondary=$2
+local resource=$3
+local disk=$4
+local device=${5:-drbd0}
+local port=${6:-7788}
+
+	# Create DRBD disk
+	create_node $@
+
+	# First time initialization
+	drbdadm secondary $resource
+}
+
+# Create disk primary and secondary
+function create() {
+local primary=$(hostname --fqdn)
+local secondary=$1
+local resource=$2
+local device=${3:-drbd0}
+local port=${4:-7788}
+local size=${5:-1G}
+# This is an ubuntu default when using the partitioner recipe
+local lvm_vg=${7:-$(hostname --short)}
+
+	# Primary
+	# =====
+        # Create logical volume
+        lvcreate --size $size --name $resource $lvm_vg
+
+	# Create local primary DRBD node
+	create_primary $primary $secondary $resource /dev/$lvm_vg/$resource $device $port
+	
+	# Secondary
+	# =========
+	# Clone LV to secondary node
+	clu-lvm clone /dev/$lvm_vg/$resource $secondary $lvm_vg
+
+	# Create secondary DRBD node
+	ssh $secondary clu-disk create_secondary $primary $secondary /dev/$lvm_vg/$resource $device $port
+}
+
         
 function destroy() {
 local resource=$2
@@ -168,4 +214,7 @@ local resource=$2
 
 # Main
 # ====
+ACTION=${1:list}
+shift
+
 $ACTION $@
