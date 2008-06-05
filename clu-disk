@@ -198,7 +198,7 @@ local lvm_vg=${7:-$(hostname --short)}
 	clu-lvm clone /dev/$lvm_vg/$resource $secondary $lvm_vg
 
 	# Create secondary DRBD node
-	ssh $secondary clu-disk create_secondary $primary $secondary /dev/$lvm_vg/$resource $device $port
+	ssh $secondary clu-disk create_secondary $primary $secondary $resource /dev/$lvm_vg/$resource $device $port
 }
 
         
