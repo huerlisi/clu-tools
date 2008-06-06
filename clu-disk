@@ -21,8 +21,8 @@ NODE2=$1
 
 function usage() {
 	echo "Usage: $(basename $0) create <SECONDARY> <RESOURCE> [<DEVICE=drbd0> <PORT=7788> <SIZE=1G> <LVM_VG=hostname>]"
+	echo "                      create_from_physical <SECONDARY> <RESOURCE> [<DEVICE=drbd0> <PORT=7788> <LV_VG=hostname>]"
 	echo "                      destroy <RESOURCE>"
-	echo "                      create_from_physical <PRIMARY> <SECONDARY> <RESOURCE> <DISK> [<DEVICE=drbd0> <PORT=7788>]"
 	echo
 	echo "Environment variables"
 	echo "	SKIP_RESIZE: if '1' don't resize LVM partition to make space for DRBD meta-data"
@@ -189,13 +189,14 @@ local lvm_vg=${7:-$(hostname --short)}
 function create_from_physical() {
 local primary=$(hostname --fqdn)
 local secondary=$1
-local disk=$2
+local resource=$2
 local device=${3:-drbd0}
 local port=${4:-7788}
-local resource=${5:-$(basename $disk)}
 # This is an ubuntu default when using the partitioner recipe
 local lvm_vg=${6:-$(hostname --short)}
 
+	local disk=/dev/$lvm_vg/$resource
+	
 	# Make space for internal DRBD meta-data
 	[ "$SKIP_RESIZE" == "1" ] || lvextend --size +$(calculate_meta $disk)M $disk
 	
