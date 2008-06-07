@@ -14,17 +14,23 @@
 
 set -e
 
-NODE1=localhost
-NODE2=dolphin1.client.zytolabor.ch
+# Commands
+# ========
+function usage() {
+	echo "Usage: $(basename $0)"
+	echo
 
-export LVM_LV=${1:-test}
-export LVM_VG=${LVM_VG:-orca}
-export LVM_FS=${LVM_FS:-ext3}
-export LVM_SIZE=${LVM_SIZE:-4G}
+	exit 0
+}
 
+function init() {
+	mkdir /etc/clu-tools
+	echo "primary=$(hostname -f)" >/etc/clu-tools/cluster.conf
+}
 
 # Main
 # ====
+ACTION=${1:init}
 
-clu-disk create $1
-ssh $NODE2 clu-disk create $1
+$ACTION $@
+
