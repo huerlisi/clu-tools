@@ -214,7 +214,7 @@ local lvm_vg=${6:-$(hostname --short)}
 
         
 function destroy() {
-local resource=$2
+local resource=$1
 
 	drbdadm down $resource
 
