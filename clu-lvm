@@ -34,19 +34,35 @@ fi
 
  
 function clone() {
-shift
-
 local lv=$1
 local secondary=$2
 local vg=$3
 
 	local extents=$(lvdisplay $lv | grep 'Current LE' | awk '{print $3}')
 	local lv_name=$(basename $lv)
+
 	ssh $secondary "lvcreate --name $lv_name --extents $extents ${vg:-\$(hostname -s)}"
 }
+
+function grow() {
+local lv=$1
+local secondary=$2
+local vg=$3
+local size=$4
+
+	local lv_name=$(basename $lv)
+
+	lvresize --size $size $lv
+	resize2fs $lv
+
+	ssh $secondary "lvresize --size $size /dev/${vg:-\$(hostname -s)}/$lv_name"
+	ssh $secondary "resize2fs /dev/${vg:-\$(hostname -s)}/$lv_name"
+}
+
 
 # Main
 # ====
 ACTION=${1:lvdisplay}
+shift
 
 $ACTION $@
