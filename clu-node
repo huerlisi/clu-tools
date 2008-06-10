@@ -25,7 +25,7 @@ function usage() {
 
 function get_master() {
 	master_line=$(egrep "^[[:space:]]*master=" /etc/clu-tools/cluster.conf)
-	eval "$master_line; echo $master"
+	eval "$master_line; echo \$master"
 }
 
 function add() {
