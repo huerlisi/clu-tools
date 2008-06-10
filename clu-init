@@ -17,20 +17,33 @@ set -e
 # Commands
 # ========
 function usage() {
-	echo "Usage: $(basename $0)"
+	echo "Usage: $(basename $0) init [<master>]"
 	echo
 
 	exit 0
 }
 
+function master() {
+local master=${1:-$(hostname -f)}
+
+	echo "master=\"$master\"" >/etc/clu-tools/cluster.conf
+}
+
 function init() {
+local master=${1:-$(hostname -f)}
+
 	mkdir /etc/clu-tools
-	echo "primary=$(hostname -f)" >/etc/clu-tools/cluster.conf
+	master $master
 }
 
 # Main
 # ====
-ACTION=${1:init}
+if [ $# == 0 ] ; then
+	ACTION=init
+else
+	ACTION=$1
+	shift
+fi
 
 $ACTION $@
 
