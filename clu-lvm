@@ -19,6 +19,8 @@ set -e
 NODE1=$(hostname -f)
 NODE2=$1
 
+# Commands
+# ========
 function usage() {
 	echo "Usage: $(basename $0) clone <LOGICAL_VOULE> <SECONDARY> [<VOLUME_GROUP>]"
 	echo
