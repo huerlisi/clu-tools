@@ -16,9 +16,6 @@ set -e
 
 # Commandline Parsing
 # ===================
-NODE1=$(hostname -f)
-NODE2=$1
-
 function usage() {
 	echo "Usage: $(basename $0) create <SECONDARY> <INSTANCE> [<xen-create-image options>]"
 	echo "                      destroy <INSTANCE>"
@@ -29,9 +26,6 @@ if [ $# -lt 2 ] ; then
 fi
 
 
- 
-ACTION=${1:list}
-
 function get_ip() {
 local name=$1
 
@@ -41,9 +35,9 @@ local name=$1
 # Create instance
 function create() {
 local primary=$(hostname --fqdn)
-local secondary=$2
-local instance=$3
-shift 3
+local secondary=$1
+local instance=$2
+shift 2
 local xen_create_image_options="$@"
 
         # Create disc
@@ -57,7 +51,7 @@ local xen_create_image_options="$@"
 }
         
 function destroy() {
-local resource=$2
+local resource=$1
 
 	xen-destroy-image $instance
 	clu-disk destroy $instance-disk
@@ -65,4 +59,8 @@ local resource=$2
 
 # Main
 # ====
+ 
+ACTION=${1:usage}
+shift
+
 $ACTION $@
