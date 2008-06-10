@@ -50,7 +50,10 @@ local xen_create_image_options="$@"
         clu-disk create $secondary $instance-disk
 
 	# Create xen instance
-	xen-create-image --drbd $secondary --hostname $instance --dhcp --noswap --force
+	xen-create-image --drbd $secondary --hostname $instance --noswap --force $xen_create_image_options
+
+	# Copy xen config
+	scp /etc/xen/$instance.cfg $secondary:/etc/xen/
 }
         
 function destroy() {
