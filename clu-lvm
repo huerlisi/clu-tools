@@ -52,7 +52,17 @@ local size=$4
 
 	local lv_name=$(basename $lv)
 
-	lvresize --size $size $lv
+	( lvresize --test --size $size $lv >/dev/null 2>&1 )
+	result=$?
+	if [ $result == 3 ] ; then
+		echo "[WARN] Logical volume already set to $size"
+	elif [ $result != 0 ] ; then
+		lvresize --test --size $size $lv
+		exit $result
+	else
+		lvresize --size $size $lv
+	fi
+	
 	resize2fs $lv
 
 	ssh $secondary "lvresize --size $size /dev/${vg:-\$(hostname -s)}/$lv_name"
