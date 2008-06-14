@@ -1,0 +1,61 @@
+#!/bin/bash
+#  Copyright 2008 Simon Hürlimann <simon.huerlimann@cyt.ch>
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+
+set -e
+
+# Commandline Parsing
+# ===================
+NODE1=$(hostname -f)
+NODE2=$1
+
+function usage() {
+	echo "Usage: $(basename $0) clone <LOGICAL_VOULE> <SECONDARY> [<VOLUME_GROUP>]"
+	echo "       $(basename $0) get_device <IMAGE_PATH>"
+	echo
+
+	exit 0
+}
+if [ $# -lt 2 ] ; then
+	usage
+fi
+
+
+# Helper functions
+# ================
+function get_device() {
+local image=$1
+
+	for loop in /dev/loop* ; do
+		sudo losetup $loop 2>&1
+	done | grep "$image" | cut -f 1 -d ':'
+}
+
+function clone() {
+shift
+
+local lv=$1
+local secondary=$2
+local vg=$3
+
+	local extents=$(lvdisplay $lv | grep 'Current LE' | awk '{print $3}')
+	local lv_name=$(basename $lv)
+	ssh $secondary "lvcreate --name $lv_name --extents $extents ${vg:-\$(hostname -s)}"
+}
+
+# Main
+# ====
+ACTION=${1:lvdisplay}
+
+shift
+
+$ACTION $@
