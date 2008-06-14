@@ -23,6 +23,7 @@ NODE2=$1
 # ========
 function usage() {
 	echo "Usage: $(basename $0) clone <LOGICAL_VOLUME> <SECONDARY> [<VOLUME_GROUP>]"
+	echo "       $(basename $0) grow <LOGICAL_VOLUME> <SECONDARY> <VOLUME_GROUP>" <NEW_SIZE>
 	echo
 
 	exit 0
