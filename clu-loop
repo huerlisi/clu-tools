@@ -15,12 +15,11 @@ set -e
 
 # Commandline Parsing
 # ===================
-NODE1=$(hostname -f)
-NODE2=$1
-
 function usage() {
 	echo "Usage: $(basename $0) clone <LOGICAL_VOULE> <SECONDARY> [<VOLUME_GROUP>]"
 	echo "       $(basename $0) get_device <IMAGE_PATH>"
+	echo "       $(basename $0) grow_to <IMAGE_PATH> <NEW_SIZE in Bytes>"
+	echo "       $(basename $0) grow_by <IMAGE_PATH> <ADDITIONAL_SIZE in Bytes>"
 	echo
 
 	exit 0
@@ -40,21 +39,50 @@ local image=$1
 	done | grep "$image" | cut -f 1 -d ':'
 }
 
-function clone() {
-shift
+function get_size() {
+local image=$1
 
-local lv=$1
-local secondary=$2
-local vg=$3
+	stat -c %s $image
+}
 
-	local extents=$(lvdisplay $lv | grep 'Current LE' | awk '{print $3}')
-	local lv_name=$(basename $lv)
-	ssh $secondary "lvcreate --name $lv_name --extents $extents ${vg:-\$(hostname -s)}"
+function grow_by() {
+local image=$1
+local size_increment=$2
+
+	local old_size=$(get_size $image)
+	local new_size=$(( $old_size + $size_increment ))
+	
+	grow_to $image $new_size
+}
+
+# Grows image file to new size, supports sparse files.
+#  $1: path to image
+#  $2: new size in bytes
+function grow_to() {
+local image=$1
+local new_size=$2
+	
+	if [ ! -f $image ] ; then
+		echo "[ERROR] $image is not a file" >&2
+		exit 1
+	fi
+
+	local old_size=$(get_size $image)
+	
+	if [ $new_size -gt $old_size ] ; then
+		# TODO make silent
+		sudo dd if=/dev/null of=$image seek=$new_size bs=1 count=1 status=noxfer
+	elif [ $new_size -eq $old_size ] ; then
+		echo "[WARN] Image $image is already $new_size" >&2
+	else
+		echo "[ERROR] Image $image is already bigger than $new_size" >&2
+		exit 1
+	fi
 }
 
 # Main
 # ====
-ACTION=${1:lvdisplay}
+ACTION=${1:usage}
 
 shift
 
