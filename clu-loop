@@ -16,8 +16,8 @@ set -e
 # Commandline Parsing
 # ===================
 function usage() {
-	echo "Usage: $(basename $0) clone <LOGICAL_VOULE> <SECONDARY> [<VOLUME_GROUP>]"
-	echo "       $(basename $0) get_device <IMAGE_PATH>"
+	echo "Usage: $(basename $0) get_device <IMAGE_PATH>"
+	echo "       $(basename $0) get_size <IMAGE_PATH>"
 	echo "       $(basename $0) grow_to <IMAGE_PATH> <NEW_SIZE in Bytes>"
 	echo "       $(basename $0) grow_by <IMAGE_PATH> <ADDITIONAL_SIZE in Bytes>"
 	echo
