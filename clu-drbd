@@ -118,6 +118,25 @@ function get_next_port() {
 	echo $(( $(drbdadm dump-xml | grep '<address' | sed 's/.*<address port="\(.*\)">.*/\1/' | sort -u | tail -1) + 1 ))
 }
 
+function get_device() {
+local resource=$1
+
+	drbdadm sh-dev $resource
+}
+
+function get_disk() {
+local resource=$1
+
+	drbdadm sh-md-dev $resource
+}
+
+function get_peer() {
+local resource=$1
+
+	# Argh... Ugly as hell
+	drbdsetup $(get_device $resource) show | grep -A 1 _remote_host | tail -1 |cut -d $'\t' -f 5 | cut -d ':' -f 1
+}
+
 
 # Commands
 # ========
