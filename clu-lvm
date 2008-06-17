@@ -71,6 +71,12 @@ local new_size=$2
 	resize $device "${mb_size}M"
 }
 
+function get_size() {
+local device=$1
+
+	blockdev --getsize64 $device
+}
+
 function grow_by() {
 local device=$1
 local add_size=$2
