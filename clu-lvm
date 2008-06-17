@@ -68,7 +68,7 @@ local new_size=$2
 
 	local mb_size=$(( $new_size / ( 2 ** 20 ) ))
 
-	resize "${mb_size}M"
+	resize $device "${mb_size}M"
 }
 
 function grow_by() {
@@ -77,7 +77,7 @@ local add_size=$2
 
 	local mb_size=$(( $add_size / ( 2 ** 20 ) ))
 
-	resize "+${mb_size}M"
+	resize $device "+${mb_size}M"
 }
 
 
