@@ -137,9 +137,48 @@ local resource=$1
 	drbdsetup $(get_device $resource) show | grep -A 1 _remote_host | tail -1 |cut -d $'\t' -f 5 | cut -d ':' -f 1
 }
 
+function run_on_peer() {
+local $resource=$1
+local $command="$@"
+
+	ssh $(get_peer $resource) $command
+}
 
 # Commands
 # ========
+
+
+function get_size() {
+local resource=$1
+
+        blockdev --getsize64 $(get_device $resource)
+}
+
+function grow_to() {
+local resource=$1
+local new_size=$2
+
+	# Local disk
+	clu-disk grow_to $(get_disk $resource) $new_size
+
+	# Remote disk
+	run_on_peer $resource clu-disk grow_to $(get_disk $resource) $new_size
+	
+	# Grow DRBD
+	drbdadm resize $resource
+}
+
+function grow_by() {
+local resource=$1
+local size_increment=$2
+
+	local old_size=$(get_size $resource)
+	local new_size=$(( $old_size + $size_increment ))
+	
+	grow_to $resource $new_size
+}
+
+
 
 function get_device_type() {
 local device=$1
