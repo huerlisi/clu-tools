@@ -102,7 +102,7 @@ local resource=$1
 function extract_disk() {
 local resource=$1
 
-        extract_section $resource | sed -n 's#[^#]*[[:space:]]disk[[:space:]]*\(/dev/[^;]*\);.*#\1#p'
+        extract_section $resource | sed -n 's#^[^#]*[[:space:]]disk[[:space:]]*\(/dev/[^;]*\);.*#\1#p'
 }
         
 function get_next_device() {
