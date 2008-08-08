@@ -176,7 +176,7 @@ local device=${3:-$(get_next_device)}
 local port=${4:-$(get_next_port)}
 local size=${5:-1G}
 # This is an ubuntu default when using the partitioner recipe
-local lvm_vg=${7:-$(hostname --short)}
+local lvm_vg=${6:-$(hostname --short)}
 
 	# Primary
 	# =====
@@ -226,7 +226,7 @@ local lvm_vg=${6:-$(hostname --short)}
 function destroy() {
 local resource=$1
 
-	drbdadm down $resource
+	drbdadm down $resource || true # Don't exit on fail 
 
 	lvremove $(extract_disk $resource)
 
