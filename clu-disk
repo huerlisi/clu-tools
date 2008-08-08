@@ -88,7 +88,8 @@ local disk=$1
 function cut_section() {
 local resource=$1
 
-	cat /etc/drbd.conf | awk -f /usr/local/bin/clu-tools/cut_section.awk -v resource=$resource >/etc/drbd.conf
+	local config="$(</etc/drbd.conf)"
+	echo "$config" | awk -f /usr/local/bin/clu-tools/cut_section.awk -v resource=$resource >/etc/drbd.conf
 }
 
 function extract_section() {
