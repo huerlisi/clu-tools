@@ -51,9 +51,9 @@ local xen_create_image_options="$@"
 }
         
 function destroy() {
-local resource=$1
+local instance=$1
 
-	xen-destroy-image $instance
+	xen-delete-image $instance
 	clu-disk destroy $instance-disk
 }
 

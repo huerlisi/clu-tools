@@ -226,6 +226,19 @@ local lvm_vg=${6:-$(hostname --short)}
 function destroy() {
 local resource=$1
 
+	local device=$(drbdadm sh-dev $resource)
+	# The resource might be mounted somewhere
+	if grep --quiet $device /etc/mtab ; then
+		local mount_point=$(grep $device /etc/mtab | cut -d ' ' -f 2)
+		read -p "DRBD disk '$device' is mounted at '$mount_point'. Umount? [y/N]: " answer
+		if [ "$answer" == "y" ] ; then
+			umount $device
+		else
+			echo "Exiting."
+			exit 1
+		fi
+	fi
+
 	drbdadm down $resource || true # Don't exit on fail 
 
 	lvremove $(extract_disk $resource)
