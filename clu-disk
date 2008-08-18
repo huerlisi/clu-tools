@@ -42,7 +42,7 @@ fi
 function get_ip() {
 local name=$1
 
-	host $name | cut -d ' ' -f 4
+	host $name | grep 'has address' | cut -d ' ' -f 4
 }
 
 function drbd_resource_config() {
