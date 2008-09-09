@@ -227,9 +227,16 @@ function destroy() {
 local resource=$1
 
 	local device=$(drbdadm sh-dev $resource)
+	
+	if [ -z "$device" ] ; then
+		echo "DRBD resource '$resource' not defined in /etc/drbd.conf."
+		echo "Exiting."
+		exit 1
+	fi
+
 	# The resource might be mounted somewhere
-	if grep --quiet $device /etc/mtab ; then
-		local mount_point=$(grep $device /etc/mtab | cut -d ' ' -f 2)
+	if grep --quiet "^$device " /etc/mtab ; then
+		local mount_point=$(grep "^$device " /etc/mtab | cut -d ' ' -f 2)
 		read -p "DRBD disk '$device' is mounted at '$mount_point'. Umount? [y/N]: " answer
 		if [ "$answer" == "y" ] ; then
 			umount $device
