@@ -25,6 +25,7 @@ function usage() {
 	echo "Usage: $(basename $0) clone <LOGICAL_VOLUME> <SECONDARY> [<VOLUME_GROUP>]"
 	echo "       $(basename $0) grow_to <LOGICAL_VOLUME_PATH> <NEW_SIZE in Bytes>"
 	echo "       $(basename $0) grow_by <LOGICAL_VOLUME_PATH> <ADDITIONAL_SIZE in Bytes>"
+	echo "       $(basename $0) destroy <LOGICAL_VOLUME_PATH>"
 	echo
 
 	exit 0
@@ -84,6 +85,23 @@ local add_size=$2
 	local mb_size=$(( $add_size / ( 2 ** 20 ) ))
 
 	resize $device "+${mb_size}M"
+}
+
+function destroy() {
+local device=$1
+
+	if grep --quiet "^$device " /etc/mtab ; then
+		local mount_point=$(grep "^$device " /etc/mtab | cut -d ' ' -f 2)
+		read -p "Disk '$device' is mounted at '$mount_point'. Umount? [y/N]: " answer
+		if [ "$answer" == "y" ] ; then
+			umount $device
+		else
+			echo "Exiting."
+			exit 1
+		fi
+	fi
+
+	lvremove $device
 }
 
 

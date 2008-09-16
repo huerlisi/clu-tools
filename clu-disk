@@ -247,7 +247,7 @@ local resource=$1
 
 	drbdadm down $resource || true # Don't exit on fail 
 
-	lvremove $(extract_disk $resource)
+	clu-lvm destroy $(extract_disk $resource) || true # Don't exit on fail
 
 	[ "$SKIP_CONF" == "1" ] || cut_section $resource
 }
