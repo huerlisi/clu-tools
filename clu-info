@@ -29,19 +29,40 @@ ip -family inet address
 echo
 ip route
 echo
-brctl show
-echo
+if [ -n "$(which brctl)" ] ; then
+	brctl show
+	echo
+else
+	echo "No network bridge"
+	echo
+fi
 
 echo "Disks:"
-vgs
-echo
-lvs
-echo 
-cat /proc/drbd
-echo
+if [ -n "$(which vgdisplay)" ] ; then
+	vgdisplay
+	echo
+	lvdisplay
+	echo
+else
+	echo "No LVM"
+	echo
+fi
+
+if [ -f /proc/drbd ] ; then
+	cat /proc/drbd
+	echo
+else
+	echo "No DRBD"
+	echo
+fi
 
 echo "Xen:"
-xm uptime
-echo
+if [ -n "$(which xm)" ] ; then
+	xm uptime
+	echo
 
-xm list
+	xm list
+else
+	echo "No Xen"
+	echo
+fi
